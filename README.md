@@ -1,4 +1,4 @@
-﻿#my New project raftNode 
+﻿# my New project raftNode 
 
  这个 project是实现Raft 协议中的RaftNode 类。
  包含的属性：
@@ -199,3 +199,26 @@ fail 方法，处理失败响应。记录日志，标记pre-vote 请求失败，
 21 GetLeaderCommitIndexRequest（获取领导者提交索引请求）：无具体字段，表示请求领导者的提交索引。
 22.GetLeaderCommitIndexResponse（获取领导者提交索引响应）：
   -commit_index（提交索引）：领导者的提交索引。
+# Service Package
+
+
+
+
+
+
+
+# Storage Packge
+
+
+
+# Util package
+
+
+
+# Peer
+
+
+# RaftOptions
+
+
+# StateMachine
