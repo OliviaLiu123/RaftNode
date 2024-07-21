@@ -132,88 +132,70 @@ fail 方法，处理失败响应。记录日志，标记pre-vote 请求失败，
   - voted_for: 投票给
   - first_log_index: 第一个日志索引
   - commit_index:提交索引
-   SnapshotMetaData（快照元数据）：
+5.SnapshotMetaData（快照元数据）：
+ -last_included_index（包含的最后一个索引）：快照中包含的最后一个日志条目的索引。
+ -last_included_term（包含的最后一个任期）：快照中包含的最后一个日志条目的任期。
+ -configuration（配置）：快照时的集群配置。
+6.LogEntry（日志条目）：
+ -term（任期）：领导者接收到该条目时的任期。
+ -index（索引）：日志条目的索引。
+ -type（类型）：日志条目的类型（数据或配置）。
+ -data（数据）：日志条目中包含的实际数据。
+7.VoteRequest（投票请求）：
+-server_id（服务器ID）：请求投票的候选人的ID。
+-term（任期）：候选人的任期号。
+-last_log_term（最后日志任期）：候选人最后日志条目的任期号。
+-last_log_index（最后日志索引）：候选人最后日志条目的索引值。
+8.VoteResponse（投票响应）：
+-term（任期）：响应投票请求的服务器的当前任期号。
+-granted（授予）：表示候选人是否赢得了此张选票。
+9.AppendEntriesRequest（追加条目请求）：
+-server_id（服务器ID）：领导者的ID。
+-term（任期）：领导者的任期号。
+-prev_log_index（前一个日志索引）：新的日志条目紧随的前一个日志索引。
+-prev_log_term（前一个日志任期）：前一个日志条目的任期号。
+-commit_index（提交索引）：领导者已经提交的日志的索引值。
+-entries（条目）：准备存储的日志条目（如果是心跳消息则为空）。
 
-last_included_index（包含的最后一个索引）：快照中包含的最后一个日志条目的索引。
-last_included_term（包含的最后一个任期）：快照中包含的最后一个日志条目的任期。
-configuration（配置）：快照时的集群配置。
-LogEntry（日志条目）：
+10.AppendEntriesResponse（追加条目响应）：
 
-term（任期）：领导者接收到该条目时的任期。
-index（索引）：日志条目的索引。
-type（类型）：日志条目的类型（数据或配置）。
-data（数据）：日志条目中包含的实际数据。
-VoteRequest（投票请求）：
+-res_code（响应码）：表示跟随者是否包含了匹配上 prev_log_index 和 prev_log_term 的日志条目。
+-term（任期）：当前的任期号，用于领导者更新自己。
+-last_log_index（最后日志索引）：最后一个日志条目的索引。
 
-server_id（服务器ID）：请求投票的候选人的ID。
-term（任期）：候选人的任期号。
-last_log_term（最后日志任期）：候选人最后日志条目的任期号。
-last_log_index（最后日志索引）：候选人最后日志条目的索引值。
-VoteResponse（投票响应）：
-
-term（任期）：响应投票请求的服务器的当前任期号。
-granted（授予）：表示候选人是否赢得了此张选票。
-AppendEntriesRequest（追加条目请求）：
-
-server_id（服务器ID）：领导者的ID。
-term（任期）：领导者的任期号。
-prev_log_index（前一个日志索引）：新的日志条目紧随的前一个日志索引。
-prev_log_term（前一个日志任期）：前一个日志条目的任期号。
-commit_index（提交索引）：领导者已经提交的日志的索引值。
-entries（条目）：准备存储的日志条目（如果是心跳消息则为空）。
-AppendEntriesResponse（追加条目响应）：
-
-res_code（响应码）：表示跟随者是否包含了匹配上 prev_log_index 和 prev_log_term 的日志条目。
-term（任期）：当前的任期号，用于领导者更新自己。
-last_log_index（最后日志索引）：最后一个日志条目的索引。
-InstallSnapshotRequest（安装快照请求）：
-
-server_id（服务器ID）：请求的服务器ID。
-term（任期）：任期号。
-snapshot_meta_data（快照元数据）：包含快照的元数据。
-file_name（文件名）：快照文件名。
-offset（偏移量）：快照数据的偏移量。
-data（数据）：快照的数据块。
-is_first（是否为第一个块）：是否为第一个数据块。
-is_last（是否为最后一个块）：是否为最后一个数据块。
-InstallSnapshotResponse（安装快照响应）：
-
-res_code（响应码）：响应码。
-term（任期）：当前的任期号。
-GetLeaderRequest（获取领导者请求）：
-
-无具体字段，表示请求领导者信息。
-GetLeaderResponse（获取领导者响应）：
-
-res_code（响应码）：响应码。
-res_msg（响应消息）：响应消息。
-leader（领导者）：领导者的端点信息。
-AddPeersRequest（添加节点请求）：
-
-servers（服务器）：要添加的服务器列表。
-AddPeersResponse（添加节点响应）：
-
-res_code（响应码）：响应码。
-res_msg（响应消息）：响应消息。
-RemovePeersRequest（移除节点请求）：
-
-servers（服务器）：要移除的服务器列表。
-RemovePeersResponse（移除节点响应）：
-
-res_code（响应码）：响应码。
-res_msg（响应消息）：响应消息。
-GetConfigurationRequest（获取配置请求）：
-
-无具体字段，表示请求集群配置信息。
-GetConfigurationResponse（获取配置响应）：
-
-res_code（响应码）：响应码。
-res_msg（响应消息）：响应消息。
-leader（领导者）：领导者服务器信息。
-servers（服务器）：集群中的服务器列表。
-GetLeaderCommitIndexRequest（获取领导者提交索引请求）：
-
-无具体字段，表示请求领导者的提交索引。
-GetLeaderCommitIndexResponse（获取领导者提交索引响应）：
-
-commit_index（提交索引）：领导者的提交索引。
+11.InstallSnapshotRequest（安装快照请求）：
+  -server_id（服务器ID）：请求的服务器ID。
+  -term（任期）：任期号。
+  -snapshot_meta_data（快照元数据）：包含快照的元数据。
+  -file_name（文件名）：快照文件名。
+  -offset（偏移量）：快照数据的偏移量。
+  -data（数据）：快照的数据块。
+  -is_first（是否为第一个块）：是否为第一个数据块。
+  -is_last（是否为最后一个块）：是否为最后一个数据块。
+12. InstallSnapshotResponse（安装快照响应）：
+  -res_code（响应码）：响应码。
+  -term（任期）：当前的任期号。
+13.GetLeaderRequest（获取领导者请求）：无具体字段，表示请求领导者信息。
+14.GetLeaderResponse（获取领导者响应）：
+  -res_code（响应码）：响应码。
+  -res_msg（响应消息）：响应消息。
+  -leader（领导者）：领导者的端点信息。
+15. AddPeersRequest（添加节点请求）：
+   -servers（服务器）：要添加的服务器列表。
+16. AddPeersResponse（添加节点响应）：
+   -res_code（响应码）：响应码。
+   -res_msg（响应消息）：响应消息。
+17. RemovePeersRequest（移除节点请求）：
+- servers（服务器）：要移除的服务器列表。
+18. RemovePeersResponse（移除节点响应）：
+  -res_code（响应码）：响应码。
+  -res_msg（响应消息）：响应消息。
+19. GetConfigurationRequest（获取配置请求）：无具体字段，表示请求集群配置信息。
+20 GetConfigurationResponse（获取配置响应）：
+   -res_code（响应码）：响应码。
+   -res_msg（响应消息）：响应消息。
+   -leader（领导者）：领导者服务器信息。
+   -servers（服务器）：集群中的服务器列表。
+21 GetLeaderCommitIndexRequest（获取领导者提交索引请求）：无具体字段，表示请求领导者的提交索引。
+22.GetLeaderCommitIndexResponse（获取领导者提交索引响应）：
+  -commit_index（提交索引）：领导者的提交索引。
