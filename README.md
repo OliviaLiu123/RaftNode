@@ -112,5 +112,24 @@ fail 方法，处理失败响应。记录日志，标记pre-vote 请求失败，
 - Lock 是 RentrantLock 的一个实例，用于确保在同一时间只有一个线程可以执行受保护的代码块，从而避免数据竞争和不一致
 - commitIndexCondition 和catchUpCodition 两个条件变量，用于线程间的通信，等待待定条件满足后唤醒等待的线程
 
+# Proto
+这个Proto 文件定义了用于实现Raft 一致性算法的消息结构。以下是每个消息的功能和它们在协议中的作用
 
-
+枚举类型
+1. ResCode 响应码 ：
+    - RES_CODE_SUCCESS  ：操作成功时返回
+    - RES_CODE_FAIL: 操作失败时返回
+    - RES_CODE_NOT_LEADER：操作失败，因为该服务器不是当前领导者
+ 2.EntryType 日志条目类型
+    - ENTRY_TYPE_DATA  : 常规数据条目
+    - ENTRY_TYPE_CONFIGURATION :表示包含配置信息日志条目
+消息
+1.Endpoint 端点：包含服务器主机和端口信息
+2.Server 服务器：包含服务器ID 以及其对应的端点
+3.Configuration: 包含当前配置中的服务器列表
+4.LogMetaData 日志元数据：
+  - current_term : 当前任期号
+  - voted_for: 投票给
+  - first_log_index: 第一个日志索引
+  - commit_index:提交索引
+   
