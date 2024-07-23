@@ -201,7 +201,17 @@ fail 方法，处理失败响应。记录日志，标记pre-vote 请求失败，
   -commit_index（提交索引）：领导者的提交索引。
 # Service Package
 
+ Impl package
 
+ RaftClientServiceImpl Class 
+ 这个类实现了RaftClientService 接口。其主要作用是提供与Raft节点交互的客户端服务，包括获取领导者，获取集群配置，添加节点和移除节点。
+ 包含的属性：
+ 1. LOG: Logger 日志记录器
+ 2. jsonFormat:JsonFormat 用于将protobuf 消息格式化为json 字符串
+ 3. raftNode:RaftNode 当前raft节点
+    除了构造函数外实现的方法：
+    1. getLeader(RaftProto.GetLeaderRequest request) : 这个方法是获取集群领导者的请求。 首先，记录收到请求日志， 创建响应对象并设置默认成功响应码。然后获取节点锁，确保线程安全。再获取当前领导者ID, 如果没有领导者或者领导者id 为0 则设置响应码为失败。如果当前节点是领导者，设置响应中的领导者信息为本地服务器信息。如何当前节点不是领导者，则从配置中查找领导者并设置其信息。 最后释放锁，设置响应的领导者信息并构建响应对象，记录响应日志并返回响应
+    2. 
 
 
 
