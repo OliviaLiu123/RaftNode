@@ -209,17 +209,17 @@ fail 方法，处理失败响应。记录日志，标记pre-vote 请求失败，
  1. LOG: Logger 日志记录器
  2. jsonFormat:JsonFormat 用于将protobuf 消息格式化为json 字符串
  3. raftNode:RaftNode 当前raft节点
-    除了构造函数外实现的方法：
-    1. getLeader(RaftProto.GetLeaderRequest request) : 这个方法是获取集群领导者的请求。 首先，记录收到请求日志， 创建响应对象并设置默认成功响应码。然后获取节点锁，确保线程安全。再获取当前领导者ID, 如果没有领导者或者领导者id 为0 则设置响应码为失败。如果当前节点是领导者，设置响应中的领导者信息为本地服务器信息。如何当前节点不是领导者，则从配置中查找领导者并设置其信息。 最后释放锁，设置响应的领导者信息并构建响应对象，记录响应日志并返回响应
+除了构造函数外实现的方法：
+- getLeader(RaftProto.GetLeaderRequest request) : 这个方法是获取集群领导者的请求。 首先，记录收到请求日志， 创建响应对象并设置默认成功响应码。然后获取节点锁，确保线程安全。再获取当前领导者ID, 如果没有领导者或者领导者id 为0 则设置响应码为失败。如果当前节点是领导者，设置响应中的领导者信息为本地服务器信息。如何当前节点不是领导者，则从配置中查找领导者并设置其信息。 最后释放锁，设置响应的领导者信息并构建响应对象，记录响应日志并返回响应
     
-    2，getConfiguration(RaftProto.GetConfigurationRequest request)：处理获取当前集群配置的请求。首先创建响应对象并设置默认成功响应码，获取 Raft 节点的锁，确保线程安全。然后 获取当前的集群配置，从配置中获取领导者的信息并设置到响应中。再将配置中的所有服务器信息添加到响应中。最后释放锁，构建响应对象，记录请求和响应的日志并返回响应。
+- getConfiguration(RaftProto.GetConfigurationRequest request)：处理获取当前集群配置的请求。首先创建响应对象并设置默认成功响应码，获取 Raft 节点的锁，确保线程安全。然后 获取当前的集群配置，从配置中获取领导者的信息并设置到响应中。再将配置中的所有服务器信息添加到响应中。最后释放锁，构建响应对象，记录请求和响应的日志并返回响应。
     
-    3. addPeers(RaftProto.AddPeersRequest request)：处理向集群添加节点的请求。
+- addPeers(RaftProto.AddPeersRequest request)：处理向集群添加节点的请求。
 首先创建响应对象并设置默认失败响应码。接下来检查请求中的服务器数量是否为 2 的倍数且不为零。如果不满足条件，记录警告日志并设置响应消息为“添加的服务器数量只能是 2 的倍数”，然后返回失败响应。然后检查要添加的服务器是否已经在集群配置中。如果存在，记录警告日志并设置响应消息为“服务器已经在配置中”，然后返回失败响应。
 然后初始化要添加的节点列表并设置其初始状态，为每个新节点提交添加条目请求。此时获取 Raft 节点的锁，等待所有新节点同步完成。如果所有新节点同步完成，更新集群配置并复制到集群中。如果复制成功，设置响应码为成功。如果失败，移除新添加的节点并停止其 RPC 客户端。
 最后构建响应对象并记录请求和响应的日志。返回响应。
 
-   4.removePeers(RaftProto.RemovePeersRequest request)：处理从集群移除节点的请求。首先创建响应对象并设置默认失败响应码。检查请求中的服务器数量是否为 2 的倍数且不为零。如果不满足条件，记录警告日志并设置响应消息为“移除的服务器数量只能是 2 的倍数”，然后返回失败响应。此时获取 Raft 节点的锁，检查要移除的服务器是否在当前集群配置中。如果不存在，立即返回失败响应。然后获取 Raft 节点的锁，生成新的集群配置并转换为字节数组。再者，复制新的配置到集群中。如果复制成功，设置响应码为成功。
+- removePeers(RaftProto.RemovePeersRequest request)：处理从集群移除节点的请求。首先创建响应对象并设置默认失败响应码。检查请求中的服务器数量是否为 2 的倍数且不为零。如果不满足条件，记录警告日志并设置响应消息为“移除的服务器数量只能是 2 的倍数”，然后返回失败响应。此时获取 Raft 节点的锁，检查要移除的服务器是否在当前集群配置中。如果不存在，立即返回失败响应。然后获取 Raft 节点的锁，生成新的集群配置并转换为字节数组。再者，复制新的配置到集群中。如果复制成功，设置响应码为成功。
 最后记录请求和响应的日志。返回响应。
 
 RaftConsensusServiceImpl class 实现了RaftConcensusService 接口。主要作用是处理Raft节点之前的共识请求，包括投票请求。预投票请求和追加日志条目请求。确保各节点之前状态的一致性和协调。
@@ -236,38 +236,13 @@ raftNode：RaftNode表示当前的 Raft 节点，用于执行和管理 Raft 协�
 
 3. appendEntries(RaftProto.AppendEntriesRequest request)：处理追加日志条目请求。首先获取 Raft 节点的锁以确保线程安全。创建响应对象并设置默认响应为失败。
 然后检查请求的任期是否小于当前任期。如果请求的任期大于当前任期，则降级当前节点并设置新的领导者。再检查请求的领导者是否与当前领导者一致，请求的前一个日志索引是否在当前节点的日志中存在，请求的前一个日志项的任期是否匹配。如果请求中没有日志条目，则认为是心跳请求并更新响应。如果有日志条目，则追加这些条目到当前节点的日志中。最新提交索引最后记录日志，释放锁并返回响应。
-installSnapshot(RaftProto.InstallSnapshotRequest request)
+4. installSnapshot(RaftProto.InstallSnapshotRequest request)处理安装快照请求。首先创建响应对象并设置默认响应码为失败。获取 Raft 节点的锁并检查请求的任期，如果请求任期小于当前任期，则返回失败响应。如果请求任期大于等于当前任期，则降级当前节点并设置新的领导者。如果节点当前正在进行快照操作，则记录警告日志并返回失败响应。
+然后设置节点状态为正在安装快照并获取快照锁。如果请求是第一个快照包，初始化临时快照目录并更新元数据。将快照数据写入临时目录中的文件。如果这是最后一个快照包，将临时目录移动为正式快照目录，并更新响应码为成功。记录日志，释放快照锁并关闭文件。如果是最后一个快照包，应用状态机并重新加载快照，截断旧的日志条目。设置节点状态为未在安装快照。返回响应。
 
-作用：处理安装快照请求。
-逻辑：
-创建响应对象并设置默认响应码为失败。
-获取 Raft 节点的锁并检查请求的任期，如果请求任期小于当前任期，则返回失败响应。
-如果请求任期大于等于当前任期，则降级当前节点并设置新的领导者。
-如果节点当前正在进行快照操作，则记录警告日志并返回失败响应。
-设置节点状态为正在安装快照并获取快照锁。
-如果请求是第一个快照包，初始化临时快照目录并更新元数据。
-将快照数据写入临时目录中的文件。
-如果这是最后一个快照包，将临时目录移动为正式快照目录，并更新响应码为成功。
-记录日志，释放快照锁并关闭文件。
-如果是最后一个快照包，应用状态机并重新加载快照，截断旧的日志条目。
-设置节点状态为未在安装快照。
-返回响应。
-advanceCommitIndex(RaftProto.AppendEntriesRequest request)
+5.advanceCommitIndex(RaftProto.AppendEntriesRequest request)：在从节点上推进提交索引。
+首先计算新的提交索引并更新节点的提交索引。如果最后应用的日志索引小于提交索引，则依次应用状态机，更新最后应用的索引。最后唤醒等待提交索引的线程。
 
-作用：在从节点上推进提交索引。
-逻辑：
-计算新的提交索引并更新节点的提交索引。
-如果最后应用的日志索引小于提交索引，则依次应用状态机，更新最后应用的索引。
-唤醒等待提交索引的线程。
-getLeaderCommitIndex(RaftProto.GetLeaderCommitIndexRequest request)
-
-作用：获取领导者的提交索引。
-逻辑：
-获取 Raft 节点的锁。
-获取当前节点的提交索引。
-释放锁并构建响应对象。
-返回响应。
-
+6.getLeaderCommitIndex(RaftProto.GetLeaderCommitIndexRequest request):获取领导者的提交索引。
 
 一些接口
 RaftClientService 中有获取Leader, 获取配置，加Peer ,removePeer 方法
@@ -276,17 +251,173 @@ RaftConsensusService 中有 处理preVote， requestVote, appendEntries, install
 RaftConsensusServiceAsync中有 异步处理preVote， requestVote, appendEntries, installSnapshot ， 和getLeaderCommitIndex 方法
 
 # Storage Packge
+Segment class 这个类的主要目的是管理和存储Raft 日志条目，它提供了对日志条目的访问，写入和存储管理功能。每个Segment 对象表示Raft 日志的一段，通过维护日志条目列表已经与文件系统的交互，实现日志的持久化存储。
+ 
+
+内部类 Record 目的是封装日志条目的偏移了和实际条目数据。这个偏移量是用于记录袋日志条目在文件中的位置，这样在需要读取，恢复或处理日志条目时，可以通过偏移量快速定位到具体位置，从而提高操作中效率和准确性。
+
+Segment 类的主要属性：
+1. canWrite: boolean 该段是否可写
+2. startIndex：long 该段起始索引
+3. endIndex：long 该段结束索引
+4. fileSize：long 该段文件的大小
+5. fileName：String 该段文件的名字
+6. randomAccessFile：RandomAccessFile 与该段文件关联的随机访问文件对象
+7. entreis: List<Record> : 存储日志条目列表
+
+除了构造器，getter,setter 的方法：
+RaftProto.LogEntry getEntry(long index)： 获取指定索引处的日志条目。首先检查 startIndex 和 endIndex 是否为 0。如果是，返回 null。然后检查指定的索引是否在当前 Segment 的索引范围内。如果不在范围内，返回 null。最后计算索引在日志条目列表中的位置，并返回相应的日志条目。
+
+
+SegmentedLog 类的目的 是管理和维护Raft 日志条目段的存储，读取和操作。它通过分段管理日志文件。实现日志持久存储和高效访问，并提供日志条目追加，截断，加载等功能。
+
+1.LOG：Logger日志记录器，用于记录类的操作日志。
+2.logDir：String日志文件的目录。
+3.logDataDir：String日志数据文件的目录。
+4.maxSegmentFileSize：int单个段文件的最大大小。
+5.metaData：RaftProto.LogMetaData 日志的元数据。
+6.startLogIndexSegmentMap：TreeMap<Long, Segment>存储日志段的映射，键是段的起始索引，值是段对象。
+7.totalSize：volatile long所有段文件的总大小，用于判断是否需要进行快照。
+方法（除了getter/setter 方法）
+1.构造器：在构造器中，设置了日志目录和日志数据目录路径，每个文件的最大大小。 如何不存在就创建了日志数据目录。 调用readSegments（） 方法，读取日志目录中的所有段文件并加载它们。调用readMetaData方法，读取日志的元数据。然后检查元数据，如果为null, 并且存在段文件，则记录错误日志并抛出异常。如果为null且不存在段文件，则初始化一个新的元数据对象，并将firstLogIndex 设置为1.
+2.public RaftProto.LogEntry getEntry(long index)：获取指定索引处的日志条目。
+首先获取日志的第一个和最后一个索引，检查索引是否在有效范围内（大于等于第一个索引且小于等于最后一个索引）。如果不在范围内，返回 null 并记录调试信息。如果没有段存在，返回 null。然后查找包含该索引的段，并返回相应的日志条目。
+
+3.public long getEntryTerm(long index)：获取指定索引处日志条目的任期。首先获取指定索引的日志条目。如果日志条目为 null，返回 0。
+否则返回日志条目的任期。 
+
+4. public long getFirstLogIndex() 获取日志的第一个索引。返回元数据中的第一个日志索引。有两种情况segment为空，1）第一次初始化firstLogIndex=1 ,lastLogIndex =0 2.snapshot 刚完成，日志正好被清理掉，firstLogIndex = snapshotIndex = 1,lastLogIndex = snapshotIndex
+
+5. public long getLastLogIndex():获取日志的最后一个索引。首先检查段是否为空。如果为空且这是第一次初始化，返回第一个日志索引减一。如果快照刚完成，返回第一个日志索引减一。获取最后一个段并返回其结束索引。
+   
+6. public long append(List<RaftProto.LogEntry> entries)追加一组日志条目到日志中。首先获取当前的最后一个日志索引。遍历传入的日志条目，并依次追加：增加日志条目的索引，计算日志条目的大小，判断是否需要新建段文件。如果当前没有段或当前段不可写或段文件大小超过最大限制，则需要新建段文件；如果当前段不可写，将其关闭并重命名。
+创建或获取当前的段文件，将日志条目写入段文件并更新段的元数据，返回新的最后一个日志索引。
+
+7.public void truncatePrefix(long newFirstIndex)：截断日志前缀，将起始索引移到指定的新索引。首先检查新索引是否大于当前第一个索引，如果不大于则返回。循环删除起始索引之前的所有段文件：如果段文件是可写的，停止删除。否则删除段文件并更新总大小。更新元数据中的第一个日志索引。最后记录截断操作日志。
+
+8. public void truncateSuffix(long newEndIndex)：截断日志后缀，将结束索引移到指定的新索引。首先检查新索引是否小于当前最后一个索引，如果不小于则返回。循环删除结束索引之后的所有段文件：如果新索引等于段的结束索引，停止删除。如果新索引小于段的起始索引，删除整个段文件并更新总大小。如果新索引在段的范围内，截断段文件并更新段的元数据和总大小。最后记录截断操作日志。
+
+9. public void loadSegmentData(Segment segment)：加载段文件的数据到内存中。首先打开段文件并读取其内容，将读取到的每个日志条目添加到段的日志条目列表中。
+然后更新段的起始和结束索引和总大小。
+10.public void readSegments():读取日志目录中的所有段文件并加载它们。首先获取日志目录中的所有文件名并排序。遍历文件名，解析段的起始和结束索引。如果文件名不符合格式，记录警告日志。创建段对象并设置其属性，打开段文件并加载其数据，将段添加到映射中。
+11.public RaftProto.LogMetaData readMetaData()：读取日志元数据文件。首先打开元数据文件，从文件中读取元数据对象。返回读取的元数据对象。如果文件不存在，记录警告日志并返回 null。
+12.public void updateMetaData(Long currentTerm, Integer votedFor, Long firstLogIndex, Long commitIndex)：更新日志元数据文件。首先根据传入的参数更新元数据对象，将新的元数据对象写入元数据文件。最后记录新的元数据信息。
+
+Snapshot class 这个类的主要目的是管理和处理Raft协议中的快照操作。它负责创建，加载和维护快照元数据，以及处理快照数据文件的打开和关闭操作。快照在分布式系统中用于优化日志存储和加快状态恢复。
+
+属性： 
+1.LOG：Logger日志记录器，用于记录类的操作日志。
+2.snapshotDir：String快照文件的目录路径。
+3.metaData：RaftProto.SnapshotMetaData 快照的元数据。
+4.isInstallSnapshot：AtomicBoolean 标志是否正在安装快照。
+5.isTakeSnapshot：AtomicBoolean标志节点是否正在进行快照操作。
+6.lock：Lock 锁对象，用于同步快照操作。
+内部类
+SnapshotDataFile 封装快照数据文件的信息。包括文件名和文件的随机访问句柄。
+Snapshot 类的方法（除了 getter/setter）：
+1.构造函数 初始化 Snapshot 对象。首先设置快照目录路径。创建快照数据目录，设置快照目录路径：this.snapshotDir = raftDataDir + File.separator + "snapshot";
+将传入的 raftDataDir 和固定字符串组合，形成快照目录的路径。
+创建快照数据目录：String snapshotDataDir = snapshotDir + File.separator + "data";
+将快照目录路径和 data 组合，形成快照数据目录的路径。如果快照数据目录不存在，则创建该目录。
+
+2.public void reload()：重新加载快照的元数据。读取元数据文件，如果元数据为空，初始化一个新的空的元数据对象。
+
+3.public TreeMap<String, SnapshotDataFile> openSnapshotDataFiles()：打开快照数据目录下的所有文件，并返回文件名与文件句柄的映射。
+首先获取快照数据目录的实际路径，读取快照数据目录中的所有文件名。对每个文件名，打开文件并创建 SnapshotDataFile 对象，将其放入映射中。
+返回包含文件名和文件句柄的映射。
+
+4.public void closeSnapshotDataFiles(TreeMap<String, SnapshotDataFile> snapshotDataFileMap)关闭快照数据文件。遍历文件名和文件句柄的映射，逐一关闭文件句柄。
+
+5.public RaftProto.SnapshotMetaData readMetaData()读取快照的元数据文件。打开元数据文件并读取其中的元数据对象，如果文件不存在，记录警告日志并返回 null。
+否则返回读取的元数据对象。
+
+6.public void updateMetaData(String dir, Long lastIncludedIndex, Long lastIncludedTerm, RaftProto.Configuration configuration)：更新快照的元数据文件。根据传入的参数创建新的元数据对象。确保指定的目录存在。创建或覆盖元数据文件，并将新的元数据对象写入文件。如果发生异常，记录警告日志。
 
 
 
 # Util package
 
+ConfigurationUtils 类提供了一些用于处理 Raft 配置信息的工具方法。
 
+1. containsServer(RaftProto.Configuration configuration, int serverId) 检查配置中是否包含指定的服务器。首先遍历配置中的所有服务器，检查是否存在与给定 serverId 匹配的服务器。如果找到匹配的服务器，返回 true，否则返回 false。
+
+2.removeServers(RaftProto.Configuration configuration, List<RaftProto.Server> servers)：从配置中移除指定的服务器列表。
+首先创建一个新的配置构建器。遍历原配置中的服务器，检查每个服务器是否在要移除的服务器列表中。如果不在移除列表中，将其添加到新的配置构建器中。最后构建并返回新的配置。
+
+3.getServer(RaftProto.Configuration configuration, int serverId) 从配置中获取指定 serverId 的服务器。遍历配置中的所有服务器，检查是否存在与给定 serverId 匹配的服务器。如果找到匹配的服务器，返回该服务器对象。
+如果没有找到匹配的服务器，返回 null。
+
+
+RaftFileUtils 类提供了一些用于处理文件操作的工具方法，特别是与 Raft 协议相关的文件操作。
+
+方法
+1.getSortedFilesInDirectory(String dirName, String rootDirName)获取指定目录下的所有文件，并按排序顺序返回文件名列表。检查指定目录是否存在且是目录。
+遍历目录及其子目录中的所有文件，将文件路径添加到文件列表中，对文件列表进行排序并返回。
+
+2.openFile(String dir, String fileName, String mode)打开指定目录下的文件，并以指定模式返回 RandomAccessFile 对象。
+首先构建完整的文件路径。打开文件并返回 RandomAccessFile 对象。如果文件不存在，记录警告日志并抛出 RuntimeException。
+
+3.closeFile(RandomAccessFile randomAccessFile)关闭 RandomAccessFile 文件。首先检查文件对象是否为 null。关闭文件，并捕获并记录任何 IOException 异常。
+
+4.closeFile(FileInputStream inputStream)关闭 FileInputStream 文件。检查文件对象是否为 null，关闭文件，并捕获并记录任何 IOException 异常。
+
+5.closeFile(FileOutputStream outputStream)关闭 FileOutputStream 文件。检查文件对象是否为 null。关闭文件，并捕获并记录任何 IOException 异常。
+
+6.<T extends Message> T readProtoFromFile(RandomAccessFile raf, Class<T> clazz)从文件中读取并解析 Protobuf 消息。
+首先读取文件中的 CRC32 校验码和数据长度，读取数据并计算其 CRC32 校验码。如果校验码匹配，使用反射调用 Protobuf 的 parseFrom 方法解析数据并返回消息对象。
+如果发生任何异常或校验码不匹配，记录警告日志并返回 null。
+
+7.<T extends Message> void writeProtoToFile(RandomAccessFile raf, T message)将 Protobuf 消息写入文件。将消息转换为字节数组。计算消息的 CRC32 校验码。写入校验码和消息长度，然后写入消息数据。如果发生任何异常，记录警告日志并抛出 RuntimeException。
+8. long getCRC32(byte[] data)计算给定数据的 CRC32 校验码。使用 CRC32 类更新数据并返回计算的校验码。
 
 # Peer
 
+Peer 类 的目的是表示Raft 集群中的一个除自己以为的其他节点（一个同伴），并管理改节点的通信和状态同步。它封装了与远程节点进行通信的客户端，并维护了与该节点相关的各种状态信息。
+属性
+  1.server：RaftProto.Server表示该节点的信息。
+  2.rpcClient：RpcClient 用于与该节点通信的 RPC 客户端。
+  3.raftConsensusServiceAsync：RaftConsensusServiceAsync 用于异步调用 Raft 共识服务。
+  4.nextIndex：long 需要发送给 follower 的下一个日志条目的索引值，仅对 leader 有效。
+  5.matchIndex： long 已复制日志的最高索引值。
+  6.voteGranted：volatile Boolean 表示该节点是否授予了投票。
+  7.isCatchUp：volatile boolean 表示该节点是否已经追赶上 leader 的日志状态。
 
 # RaftOptions
+RaftOptions 类用于配置和管理 Raft 协议的各种选项和参数。这些选项包括选举超时时间、心跳周期、快照相关设置、日志条目同步配置等。通过这些配置选项，可以调整 Raft 协议的行为和性能。
+
+属性
+private int electionTimeoutMilliseconds = 5000; 跟随者在指定毫秒数内未收到领导者消息时，会变为候选人（默认5000毫秒）。
+private int heartbeatPeriodMilliseconds = 500;领导者发送心跳的周期，即使没有数据要发送（默认500毫秒）。
+private int snapshotPeriodSeconds = 3600;快照定时器执行间隔，以秒为单位（默认3600秒）。
+private int snapshotMinLogSize = 100 * 1024 * 1024;日志条目大小达到指定值时才进行快照（默认100MB）。
+private int maxSnapshotBytesPerRequest = 500 * 1024;每个快照请求的最大字节数（默认500KB）。
+private int maxLogEntriesPerRequest = 5000;每个请求的最大日志条目数（默认5000）。
+private int maxSegmentFileSize = 100 * 1000 * 1000;单个段文件的最大大小（默认100MB）。
+private long catchupMargin = 500;跟随者与领导者的日志差距在指定范围内时，才可以参与选举和提供服务（默认500）。
+private long maxAwaitTimeout = 1000;同步最大等待超时时间，以毫秒为单位（默认1000毫秒）。
+private int raftConsensusThreadNum = 20;进行同步和选举操作的线程池大小（默认20）。
+private boolean asyncWrite = false;是否异步写数据，true 表示主节点保存后立即返回，然后异步同步给从节点；false 表示主节点同步给多数从节点后才返回。
+private String dataDir = System.getProperty("com.github.raftimpl.raft.data.dir");Raft的日志和快照的父目录，绝对路径。
 
 
 # StateMachine
+StateMachine 接口 定义了 Raft 状态机的操作方法。状态机在分布式系统中用于保存和管理应用状态。Raft 协议通过状态机来应用日志条目、创建和读取快照，以及查询和修改状态机的数据。
+
+方法
+1.void writeSnapshot(String snapshotDir, String tmpSnapshotDataDir, RaftNode raftNode, long localLastAppliedIndex);对状态机中的数据进行快照，每个节点本地定时调用。
+参数：
+snapshotDir：旧快照目录。
+tmpSnapshotDataDir：新快照数据目录。
+raftNode：Raft 节点对象。
+localLastAppliedIndex：已应用到复制状态机的最大日志条目索引。
+
+2.void readSnapshot(String snapshotDir);从快照读取数据到状态机中，节点启动时调用。
+参数：snapshotDir：快照数据目录。
+
+3.void apply(byte[] dataBytes);将数据应用到状态机，通常是将日志条目应用到状态机。
+参数：dataBytes：数据的二进制表示。
+
+4.byte[] get(byte[] dataBytes);从状态机读取数据。
+参数：dataBytes：键的二进制表示。
+返回：值的二进制表示。
+
