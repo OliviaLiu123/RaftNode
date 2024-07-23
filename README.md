@@ -223,54 +223,27 @@ fail 方法，处理失败响应。记录日志，标记pre-vote 请求失败，
 最后记录请求和响应的日志。返回响应。
 
 RaftConsensusServiceImpl class 实现了RaftConcensusService 接口。主要作用是处理Raft节点之前的共识请求，包括投票请求。预投票请求和追加日志条目请求。确保各节点之前状态的一致性和协调。
-包含的属性
-private static final Logger LOG：日志记录器，用于记录类的操作日志。
-private static final JsonFormat PRINTER：用于将 Protobuf 消息格式化为 JSON 字符串。
-private RaftNode raftNode：表示当前的 Raft 节点，用于执行和管理 Raft 协议相关的操作。
-包含的方法
-RaftConsensusServiceImpl(RaftNode node)
+包含的属性：
+LOG：日志记录器，用于记录类的操作日志。
+JsonFormat PRINTER：用于将 Protobuf 消息格式化为 JSON 字符串。
+raftNode：RaftNode表示当前的 Raft 节点，用于执行和管理 Raft 协议相关的操作。
 
-作用：构造函数，初始化 RaftConsensusServiceImpl 对象。
-逻辑：接受一个 RaftNode 对象并将其赋值给类的 raftNode 属性。
-preVote(RaftProto.VoteRequest request)
+除构造函数以外的方法：
+1.preVote(RaftProto.VoteRequest request):处理预投票请求。首先获取 Raft 节点的锁以确保线程安全，然后创建响应对象并设置默认响应为不授予投票。
+然后检查请求的服务器是否在当前配置中，请求的任期是否小于当前任期，请求的日志是否至少和当前节点的日志一样新。如果日志新，则授予投票并记录日志。最后释放锁并返回响应。
 
-作用：处理预投票请求。
-逻辑：
-获取 Raft 节点的锁以确保线程安全。
-创建响应对象并设置默认响应为不授予投票。
-检查请求的服务器是否在当前配置中。
-检查请求的任期是否小于当前任期。
-检查请求的日志是否至少和当前节点的日志一样新。
-如果日志新，则授予投票并记录日志。
-释放锁并返回响应。
-requestVote(RaftProto.VoteRequest request)
+2.requestVote(RaftProto.VoteRequest request)：处理投票请求。同上，如果请求的任期大于当前任期，则降级当前节点。检查请求的日志是否至少和当前节点的日志一样新。如果日志新且当前节点未投票，则授予投票并更新元数据。最后记录日志，释放锁并返回响应。
 
-作用：处理投票请求。
-逻辑：
-获取 Raft 节点的锁以确保线程安全。
-创建响应对象并设置默认响应为不授予投票。
-检查请求的服务器是否在当前配置中。
-检查请求的任期是否小于当前任期。
-如果请求的任期大于当前任期，则降级当前节点。
-检查请求的日志是否至少和当前节点的日志一样新。
-如果日志新且当前节点未投票，则授予投票并更新元数据。
-记录日志，释放锁并返回响应。
-appendEntries(RaftProto.AppendEntriesRequest request)
+3. appendEntries(RaftProto.AppendEntriesRequest request)：处理追加日志条目请求。首先获取 Raft 节点的锁以确保线程安全。创建响应对象并设置默认响应为失败。
+然后检查请求的任期是否小于当前任期。如果请求的任期大于当前任期，则降级当前节点并设置新的领导者。再检查请求的领导者是否与当前领导者一致，请求的前一个日志索引是否在当前节点的日志中存在，请求的前一个日志项的任期是否匹配。如果请求中没有日志条目，则认为是心跳请求并更新响应。如果有日志条目，则追加这些条目到当前节点的日志中。最新提交索引最后记录日志，释放锁并返回响应。
 
-作用：处理追加日志条目请求。
-逻辑：
-获取 Raft 节点的锁以确保线程安全。
-创建响应对象并设置默认响应为失败。
-检查请求的任期是否小于当前任期。
-如果请求的任期大于当前任期，则降级当前节点并设置新的领导者。
-检查请求的领导者是否与当前领导者一致。
-检查请求的前一个日志索引是否在当前节点的日志中存在。
-检查请求的前一个日志项的任期是否匹配。
-如果请求中没有日志条目，则认为是心跳请求并更新响应。
-如果有日志条目，则追加这些条目到当前节点的日志中。
-更新提交索引。
-记录日志，释放锁并返回响应
 
+
+一些接口
+RaftClientService 中有获取Leader, 获取配置，加Peer ,removePeer 方法
+RaftClientServiceAsync 中有异步获取集群中leader, 配置，加Peer,RemovePeer 方法
+RaftConsensusService 中有 处理preVote， requestVote, appendEntries, installSnapshot ， 和getLeaderCommitIndex 方法
+RaftConsensusServiceAsync中有 异步处理preVote， requestVote, appendEntries, installSnapshot ， 和getLeaderCommitIndex 方法
 
 # Storage Packge
 
