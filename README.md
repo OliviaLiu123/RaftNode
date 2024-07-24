@@ -421,3 +421,40 @@ localLastAppliedIndex：已应用到复制状态机的最大日志条目索引�
 参数：dataBytes：键的二进制表示。
 返回：值的二进制表示。
 
+在 example module 里面 有 四个类都实现了Statemachine 接口
+这四个类是——BitCaskStateMachine、BTreeStateMachine、LevelDBStateMachine 和 RocksDBStateMachine，它们使用不同的存储引擎来管理和操作数据。以下是它们的主要区别：
+1. BitCaskStateMachine
+存储引擎：使用 BitCask。
+特点：
+BitCask 是一个简单、快速、键值对存储系统，主要用于高性能的读写操作。
+通过 BitCaskOptions 配置数据库，使用 put 和 getString 方法来存储和检索数据。
+快照处理：
+writeSnapshot 方法将快照数据复制到临时目录，并将未应用的日志条目应用到临时数据库。
+readSnapshot 方法将快照数据复制到数据目录，并打开 BitCask 数据库。
+
+2. BTreeStateMachine
+存储引擎：使用 BTreeIndex。 
+特点：
+BTreeIndex 使用 B 树数据结构进行存储，适合于需要有序访问的数据。
+通过 putValue 和 getValue 方法来存储和检索数据。
+快照处理：
+writeSnapshot 方法将快照数据复制到临时目录，并将未应用的日志条目应用到临时数据库。
+readSnapshot 方法将快照数据复制到数据目录，并打开 BTreeIndex 数据库。
+
+3. LevelDBStateMachine
+存储引擎：使用 LevelDB。
+特点：
+LevelDB 是一个高性能的键值对存储系统，支持高效的顺序写入和随机读取。
+通过 put 和 get 方法来存储和检索数据。
+快照处理：
+writeSnapshot 方法将快照数据复制到临时目录，并将未应用的日志条目应用到临时数据库。
+readSnapshot 方法将快照数据复制到数据目录，并打开 LevelDB 数据库。
+
+4. RocksDBStateMachine
+存储引擎：使用 RocksDB。 
+特点：
+RocksDB 是 LevelDB 的一个高效扩展版本，支持更高的写入吞吐量和更低的读写延迟。
+通过 put 和 get 方法来存储和检索数据。
+快照处理：
+writeSnapshot 方法使用 Checkpoint 类创建数据库的快照。
+readSnapshot 方法将快照数据复制到数据目录，并打开 RocksDB 数据库。
